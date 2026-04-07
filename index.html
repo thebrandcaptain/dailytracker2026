@@ -207,7 +207,51 @@ function checkCompletion(wasAllDone){
   }
 }
 
-// SYNC
-async function syncToSheets(data,silent=false){
-  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.includes('PASTE_YOUR')){if(!silent) showSync('Apps Script URL not set','err');return;}
-  const payload={
+async function syncToSheets(data, silent=false){
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR')){
+    if(!silent) showSync('Apps Script URL not set','err');
+    return;
+  }
+  
+  const payload = {
+    date: data.date,
+    stirling_clips: data.stirling.filter(Boolean).length,
+    brand_clips: data.brand.filter(Boolean).length,
+    dms_sent: data.dms,
+    completed: data.completed,
+    streak: data.streak
+  };
+
+  if(!silent) showSync('Syncing...','');
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(payload)
+    });
+    
+    state.synced = true;
+    saveState();
+    render();
+    if(!silent) showSync('Synced to Sheets!','ok');
+  } catch (err) {
+    console.error("Eroare la sync:", err);
+    if(!silent) showSync('Sync failed','err');
+  }
+}
+
+
+function showSync(msg, type) {
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.className = 'sync-status visible ' + type;
+  setTimeout(() => { el.classList.remove('visible'); }, 3000);
+}
+
+loadState();
+render();
+</script>
+</body>
+</html>
